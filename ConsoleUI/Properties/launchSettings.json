@@ -2,7 +2,7 @@
   "profiles": {
     "ConsoleUI": {
       "commandName": "Project",
-      "commandLineArgs": "-m add"
+      "commandLineArgs": "-m add -d /home/maskedball/RiderProjects/Goldmind/ConsoleUI/bin/Debug/net6.0"
     }
   }
 }

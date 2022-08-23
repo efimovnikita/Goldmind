@@ -5,7 +5,7 @@ using LiteDB;
 
 namespace ConsoleUI
 {
-    internal class Program
+    internal static class Program
     {
         private static async Task<int> Main(string[] args)
         {
@@ -15,27 +15,34 @@ namespace ConsoleUI
             };
             modeOption.AddAlias("-m");
 
-            RootCommand rootCommand = new("Sample app for System.CommandLine");
-            rootCommand.AddOption(modeOption);
+            Option<FileInfo> dbOption = new Option<FileInfo>("--db", "Path to headlists db directory")
+            {
+                IsRequired = true
+            };
+            dbOption.AddAlias("-d");
 
-            rootCommand.SetHandler(mode =>
+            RootCommand rootCommand = new("App for learning any language with help of Goldlist method.");
+            rootCommand.AddOption(modeOption);
+            rootCommand.AddOption(dbOption);
+
+            rootCommand.SetHandler((mode, db) =>
             {
                 if (mode is Mode.Add)
                 {
-                    RunAddMode();
+                    RunAddMode(db);
                     return;
                 }
 
-                RunDistillationMode();
+                RunDistillationMode(db);
             },
-            modeOption);
+            modeOption, dbOption);
 
             return await rootCommand.InvokeAsync(args);
         }
 
-        private static void RunDistillationMode()
+        private static void RunDistillationMode(FileSystemInfo fileInfo)
         {
-            using LiteDatabase db = new(Constants.DbPath);
+            using LiteDatabase db = new(Path.Combine(fileInfo.FullName, Constants.DbFilename));
             ILiteCollection<Headlist> collection = db.GetCollection<Headlist>(Constants.CollectionName);
 
             List<Headlist> headlists = collection.Query().ToList();
@@ -116,9 +123,9 @@ namespace ConsoleUI
         private static void PrintFailMessage(WordExpression expression) => 
             Console.WriteLine($"Fail. Right answer is \"{expression.Name}\"");
 
-        private static void RunAddMode()
+        private static void RunAddMode(FileSystemInfo fileInfo)
         {
-            using LiteDatabase db = new(Constants.DbPath);
+            using LiteDatabase db = new(Path.Combine(fileInfo.FullName, Constants.DbFilename));
             ILiteCollection<Headlist> collection = db.GetCollection<Headlist>(Constants.CollectionName);
 
             Headlist headlist = new() { Id = ObjectId.NewObjectId(), LastDistillation = DateTime.Now };
